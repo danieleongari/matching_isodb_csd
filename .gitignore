@@ -5,3 +5,5 @@ data/*.pickle
 data/step-00.csv
 data/step-01.csv
 data/step-02.csv
+data/step-03.csv
+data/step-04.csv
