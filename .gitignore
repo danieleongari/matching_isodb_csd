@@ -3,3 +3,5 @@ data/*.pickle
 
 # Files sensitive to CSD Licence
 data/step-00.csv
+data/step-01.csv
+data/step-02.csv
