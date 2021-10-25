@@ -1,2 +1,5 @@
-data/*.pickle
 .ipynb_checkpoints
+data/*.pickle
+
+# Files sensitive to CSD Licence
+data/step-00.csv
