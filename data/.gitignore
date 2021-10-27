@@ -1,0 +1,11 @@
+*.pickle
+
+# Files sensitive to CSD Licence
+step-00.csv
+step-01.csv
+step-02.csv
+step-03.csv
+step-04.csv
+
+# Big files to add only at a final stage
+csd_542_mofchecker.json 

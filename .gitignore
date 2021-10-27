@@ -1,13 +1,2 @@
 .ipynb_checkpoints
-data/*.pickle
 __pycache__
-
-# Files sensitive to CSD Licence
-data/step-00.csv
-data/step-01.csv
-data/step-02.csv
-data/step-03.csv
-data/step-04.csv
-
-# Big files to add only at a final stage
-data/csd_542_mofchecker.json 
