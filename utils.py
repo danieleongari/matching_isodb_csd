@@ -1,5 +1,6 @@
 """Utilities for the evaluation of the pore volume."""
 from numpy import mean
+import matplotlib.pyplot as plt
 
 GAS_MMASS = { #g/mol
     'Nitrogen': 14.01*2,
