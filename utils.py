@@ -13,6 +13,8 @@ LIQ_DENS = { # https://webbook.nist.gov/chemistry/fluid/
     'Ar@87K': 34.977  # (mmol/cm3) @ 1bar, 87K
 }
 
+WHICH_PLOT = ['void_fraction', 'pore_volume'][0]
+
 def adsorption_units_conversion(adsorptionUnits, gas):
     """Convert any loading to mmol/g, i.e., millimole of adsorbate (gas) per gram of adsorbent (mat)."""
     
@@ -47,9 +49,7 @@ def adsorption_units_conversion(adsorptionUnits, gas):
     elif mat_unit == 'kg':
         conv *= 1/1000  
     else: 
-        raise ValueError('adsorptionUnit has wrong format: {}'.format(adsorptionUnits))
-        
-    #print(adsorptionUnits, end=" ")
+        raise ValueError('adsorptionUnit has non-gravimetric units for the adsorbent: {}'.format(adsorptionUnits))
 
     return conv
 
@@ -60,20 +60,17 @@ def isot_pore_volume(isot, comp_density, comp_porevol, plot=False):
     
     mat_dict has the keys: "pore_vol_geom" and "density" (list for all the structures).
     """
-
-
     
     if isot['adsorbates'][0]['name']=='Nitrogen' and isot['temperature']==77:
         case = 'N2@77K'
     elif isot['adsorbates'][0]['name']=='Argon' and isot['temperature']==87:
         case = 'Ar@87K'
     else:
-        raise ValueError("Molecule/temperature unknown for pore characterization.")
+        raise Exception("Molecule/temperature unknown for pore characterization.")
 
     # conv adsorptionUnits to mmol/g
     conv = adsorption_units_conversion(isot['adsorptionUnits'], isot['adsorbates'][0]['name'])
     
-    # For the moment I'm just making a simple average of all the points in the 0.2-0.8 bar range
     thr_press = (0.58, 0.82) # (bar) ADJUST IT!
     range_press = []
     range_uptake = []
@@ -82,9 +79,13 @@ def isot_pore_volume(isot, comp_density, comp_porevol, plot=False):
             range_press.append(isot_data['pressure'])
             range_uptake.append(isot_data['species_data'][0]['adsorption'])
             
+    if len(range_uptake)==0:
+        raise ValueError(f"No pressure points in the range {thr_press}")
+            
     pore_vol = float(mean(range_uptake) * conv / LIQ_DENS[case]) # (cm3/g)
     
-    if plot:
+    if plot and WHICH_PLOT=='void_fraction':
+        """This plot is preferable for large-inspection, since the void-fraction definition ensure a better scaling of the plots."""
         fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=[12,5])
         
         # First plot: original units in full scale
@@ -116,5 +117,40 @@ def isot_pore_volume(isot, comp_density, comp_porevol, plot=False):
 
         fig.tight_layout()  # otherwise the right y-label is slightly clipped
         plt.show()
-    
+        
+    if plot and WHICH_PLOT=='pore_volume':
+        """This variant was used for the manuscript, to avoid introducing the unnecessary concept of void fraction."""
+        fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=[10,3], dpi=200)
+        
+         # First plot: original units in full scale
+        ax1.set_xlabel('Pressure (bar)')
+        ax1.set_ylabel(f"{case} uptake {isot['adsorptionUnits']}")
+        #ax1.set_ylabel("N$_2$@77K uptake ($cm^3_{STP}\ /g$)")
+        # Plot full isotherm and points used to compute the pore volume
+        x = [isot_data['pressure'] for isot_data in isot['isotherm_data']]
+        y = [isot_data['species_data'][0]['adsorption'] for isot_data in isot['isotherm_data']]
+        ax1.plot(x, y, color="blue", marker="o", markersize=3)
+        ax1.plot(range_press, range_uptake, marker="o", markersize=6, color="blue")
+        ax1.tick_params(axis='y')
+        ax1.set_ylim(0,max(y)*1.1)
+
+        # Second plot, left axis: original units, scaled axis to vf=1
+        ax2.set_xlabel('Pressure (bar)')
+        ax2.set_ylabel(f"{case} uptake {isot['adsorptionUnits']}")
+        ax2.plot(x, y, color="blue", marker="o", markersize=4, label="Isotherm")
+        ax2.plot(range_press, range_uptake, marker="o", markersize=4, color="red")
+        ax2.set_ylim(0,1.1*comp_porevol*LIQ_DENS[case]/conv) # Scale to equivalent to void fraction = 1 
+           
+        # Seconf plot, right axis: Void Fraction
+        ax3 = ax2.twinx()  
+        ax3.set_ylabel('Pore volume ($cm^3/g$)')  # we already handled the x-label with ax1       
+        ax3.axhline(comp_porevol, color='green', label='Computed from structure')
+        ax3.axhline(pore_vol, color='red', label='Measured from isotherm')
+        
+        print(pore_vol*comp_density, comp_density*comp_porevol)
+        ax3.set_ylim(0,1.1*comp_porevol)
+        ax3.legend()
+
+        #fig.tight_layout()  # otherwise the right y-label is slightly clipped, DISABLE for figure(dpi)
+        plt.show()   
     return pore_vol
