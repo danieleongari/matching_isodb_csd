@@ -1,3 +1,4 @@
+# Pickle of NIST-DB pristine data
 nistdb.pickle
 
 # Files sensitive to CSD Licence
@@ -11,6 +12,6 @@ step-06.csv
 step-07.csv
 step-08.csv
 
-# Big files to add only at a final stage
+# Too big files for a Git repository - please contact the author at daniele.ongari@gmail.com
 csd_542_mofchecker.json 
 zeopp_asr_dicts.pickle
